@@ -32,6 +32,9 @@ const app = new Vue({
     videoStreams: [],
     noSleep: false,
     nextStreamId: 1,
+    selectedDevice: 'off',
+    devices: [],
+    callContext: null,
   },
   computed: {
     url() {
@@ -43,6 +46,9 @@ const app = new Vue({
       /* global NoSleep */
       if (!this.noSleepInstance) this.noSleepInstance = new NoSleep()
       enabled ? this.noSleepInstance.enable() : this.noSleepInstance.disable()
+    },
+    selectedDevice(deviceId) {
+      if (this.callContext) this.callContext.setDeviceId(deviceId)
     }
   },
   mounted() {
@@ -66,11 +72,35 @@ const app = new Vue({
         const target = connectMatch[1]
         console.log('Connecting to ', target)
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-        const call = peer.call(target, stream)
-        call.on('error', (e) => {
-          alert('Cannot establish call!')
-        })
-        registerConnection(call)
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        this.devices = Array.from(devices)
+          .filter(d => d.kind === 'videoinput')
+          .map((d, i) => {
+            return {
+              deviceId: d.deviceId,
+              label: d.label || 'Video input ' + (i + 1)
+            }
+          })
+        let currentCall = {
+          dispose() {
+            for (const t of stream.getTracks()) t.stop()
+          }
+        }
+        this.callContext = {
+          setDeviceId: async deviceId => {
+            if (currentCall) currentCall.dispose()
+            currentCall = null
+            if (deviceId === 'off') {
+              return
+            }
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId }, audio: false })
+            const call = peer.call(target, stream)
+            call.on('error', (e) => {
+              alert('Cannot establish call!')
+            })
+            registerConnection(call)
+          }
+        }
       } else {
         this.mode = 'receiver'
       }
@@ -79,12 +109,15 @@ const app = new Vue({
       console.log('Call received!')
       call.on('stream', (remoteStream) => {
         const item = { stream: remoteStream, id: this.nextStreamId++ }
-        this.videoStreams.push(item)
+        this.videoStreams.unshift(item)
         for (const track of remoteStream.getTracks()) {
           track.addEventListener('ended', () => {
             this.videoStreams = this.videoStreams.filter(s => s !== item)
           })
         }
+      })
+      call.on('close', (remoteStream) => {
+        this.videoStreams = this.videoStreams.filter(s => s !== item)
       })
       call.answer()
       registerConnection(call)

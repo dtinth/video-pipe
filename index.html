@@ -22,12 +22,18 @@
       </div>
       <template v-if="mode === 'loading'">
         <p>
-          Setting up WebRTC...
+          Setting up WebRTC and PeerJS...
         </p>
       </template>
       <template v-if="mode === 'sender'">
         <p>
-          Sending your video stream...
+          Select a video stream to send:<br>
+          <select v-model="selectedDevice" v-if="devices">
+            <option value="off">Do not send</option>
+            <option :value="device.deviceId" v-for="device of devices"
+              >{{ device.label }}</option
+            >
+          </select>
         </p>
         <p>
           <label>
