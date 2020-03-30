@@ -1,11 +1,11 @@
-# midirtc
+# video-pipe
 
-Send and receive MIDI messages over WebRTC. Powered by PeerJS and Web MIDI API.
+Transmit video over WebRTC. Powered by PeerJS.
 
-|                       |                                    |
-| --------------------- | ---------------------------------- |
-| **Glitch project**    | https://glitch.com/~midi-rtc       |
-| **GitHub repository** | https://github.com/dtinth/midi-rtc |
+|                       |                                      |
+| --------------------- | ------------------------------------ |
+| **Glitch project**    | https://glitch.com/~video-pipe       |
+| **GitHub repository** | https://github.com/dtinth/video-pipe |
 
 ## Made by [Glitch](https://glitch.com/)
 

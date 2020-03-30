@@ -40,7 +40,15 @@
             <input type="checkbox" v-model="noSleep">
             Prevent display sleep
           </label>
+          
+          <label v-if="callContext && callContext.currentCall && callContext.currentCall.stream">
+            <input type="checkbox" v-model="callContext.showLocalStream">
+            Show stream
+          </label>
         </p>
+        <div v-if="callContext && callContext.currentCall && callContext.currentCall.stream && callContext.showLocalStream">
+          <video-stream :video-stream="callContext.currentCall.stream"></video-stream>
+        </div>
       </template>
       <template v-if="mode === 'receiver'">
         <p id="connection-info">

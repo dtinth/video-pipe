@@ -82,6 +82,7 @@ const app = new Vue({
             }
           })
         this.callContext = {
+          showLocalStream: false,
           currentCall: {
             dispose() {
               for (const t of stream.getTracks()) t.stop()
@@ -99,6 +100,7 @@ const app = new Vue({
               alert('Cannot establish call!')
             })
             this.callContext.currentCall = {
+              stream,
               dispose() {
                 for (const t of stream.getTracks()) t.stop()
                 call.close()
