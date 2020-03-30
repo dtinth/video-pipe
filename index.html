@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>MIDI-RTC</title>
+    <title>video-pipe</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,9 +10,9 @@
     <link rel="stylesheet" href="/style.css">
   </head>  
   <body>
-    <h1>MIDI-RTC</h1>
+    <h1>video-pipe</h1>
     <p>
-      Send and receive MIDI messages over WebRTC. Powered by PeerJS and Web MIDI API.
+      Send video over WebRTC. Powered by PeerJS.
     </p>
     <div id="app" class="container">
       <p id="connection-info">
@@ -24,39 +24,7 @@
       <template v-if="error">
         {{ error }}
       </template>
-      <template v-else>
-        <div class="row">
-          <div>
-            <h2>MIDI input</h2>
-            <port-selector :selected="currentInput" :available="availableInputs" @select="selectedInput = $event"></port-selector>
-          </div>
-          <div class="arrow align-self-center">
-            &rarr;
-          </div>
-          <div>
-            <h2>WebRTC</h2>
-            Received: {{ received }}<br>
-            Sent: {{ sent }}<br>
-          </div>
-          <div class="arrow align-self-center">
-            &rarr;
-          </div>
-          <div>
-            <h2>MIDI output</h2>
-            <port-selector :selected="currentOutput" :available="availableOutputs" @select="selectedOutput = $event"></port-selector>
-          </div>
-        </div>
-      </template>
     </div>
-    <script type="x-template" id="port-selector">
-      <div>
-        <ul class="port-selector">
-          <li v-for="option of options" :key="option.key" :class="{ 'is-selected': option.selected }">
-            <a href="javascript:" @click="select(option)">{{ option.text }}</a>
-          </li>
-        </ul>
-      </div>
-    </script>
 
     <script src="https://unpkg.com/peerjs@1.0.0/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
