@@ -8,7 +8,13 @@ const VideoStream = {
     </div>
   `,
   mounted() {
-    this.$refs.video.srcObject = this.videoStream
+    const video = window.video = this.$refs.video
+    video.srcObject = this.videoStream
+    video.onloadedmetadata = e => {
+      console.log(e)
+      video.play()
+    }
+    video.play()
   },
 }
 
@@ -23,12 +29,21 @@ const app = new Vue({
     activeConnections: [],
     mode: 'loading',
     error: null,
-    videoStream: null
+    videoStreams: [],
+    noSleep: false,
+    nextStreamId: 1,
   },
   computed: {
     url() {
       return this.baseUrl + '#' + this.peerId
     },
+  },
+  watch: {
+    noSleep(enabled) {
+      /* global NoSleep */
+      if (!this.noSleepInstance) this.noSleepInstance = new NoSleep()
+      enabled ? this.noSleepInstance.enable() : this.noSleepInstance.disable()
+    }
   },
   mounted() {
     const peer = new Peer(sessionStorage.savedPeerId || undefined)
@@ -36,6 +51,9 @@ const app = new Vue({
     const registerConnection = (conn) => {
       this.activeConnections.push(conn)
       conn.on('close', () => {
+        this.activeConnections.filter(c => c !== conn)
+      })
+      conn.on('error', () => {
         this.activeConnections.filter(c => c !== conn)
       })
     }
@@ -52,6 +70,7 @@ const app = new Vue({
         call.on('error', (e) => {
           alert('Cannot establish call!')
         })
+        registerConnection(call)
       } else {
         this.mode = 'receiver'
       }
@@ -59,9 +78,16 @@ const app = new Vue({
     peer.on('call', call => {
       console.log('Call received!')
       call.on('stream', (remoteStream) => {
-        this.videoStream = remoteStream
+        const item = { stream: remoteStream, id: this.nextStreamId++ }
+        this.videoStreams.push(item)
+        for (const track of remoteStream.getTracks()) {
+          track.addEventListener('ended', () => {
+            this.videoStreams = this.videoStreams.filter(s => s !== item)
+          })
+        }
       })
       call.answer()
+      registerConnection(call)
     })
   }
 })

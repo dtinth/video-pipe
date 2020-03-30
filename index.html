@@ -10,25 +10,49 @@
     <link rel="stylesheet" href="/style.css">
   </head>  
   <body>
-    <h1>video-pipe</h1>
-    <p>
-      Send video over WebRTC. Powered by PeerJS.
-    </p>
     <div id="app" class="container">
-      <p id="connection-info">
-        Other peers can connect to you by going to {{url}}
+      <h1>video-pipe</h1>
+      <p>
+        Send video over WebRTC. Powered by PeerJS.
       </p>
-      <p id="connection-status">
-        Connected to {{activeConnections.length}} other peer{{activeConnections.length === 1 ? '' : 's'}}.
-      </p>
-      <template v-if="error">
-        {{ error }}
+      <div v-if="false">
+        <p>
+          Loading...
+        </p>
+      </div>
+      <template v-if="mode === 'loading'">
+        <p>
+          Setting up WebRTC...
+        </p>
       </template>
-      <video-stream :video-stream="videoStream" v-if="videoStream"></video-stream>
+      <template v-if="mode === 'sender'">
+        <p>
+          Sending your video stream...
+        </p>
+        <p>
+          <label>
+            <input type="checkbox" v-model="noSleep">
+            Prevent display sleep
+          </label>
+        </p>
+      </template>
+      <template v-if="mode === 'receiver'">
+        <p id="connection-info">
+          Other peers can connect to you by going to {{url}}
+        </p>
+        <p id="connection-status">
+          Connected to {{activeConnections.length}} other peer{{activeConnections.length === 1 ? '' : 's'}}.
+        </p>
+        <template v-if="error">
+          {{ error }}
+        </template>
+      </template>
+      <video-stream :video-stream="videoStream.stream" v-for="videoStream of videoStreams" :key="videoStream.id"></video-stream>
     </div>
 
     <script src="https://unpkg.com/peerjs@1.0.0/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/nosleep.js@0.9.0/dist/NoSleep.min.js"></script>
     <script src="/script.js"></script>
 
     <!-- include the Glitch button to show what the webpage is about and
