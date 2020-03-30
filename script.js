@@ -81,15 +81,15 @@ const app = new Vue({
               label: d.label || 'Video input ' + (i + 1)
             }
           })
-        let currentCall = {
-          dispose() {
-            for (const t of stream.getTracks()) t.stop()
-          }
-        }
         this.callContext = {
+          currentCall: {
+            dispose() {
+              for (const t of stream.getTracks()) t.stop()
+            }
+          },
           setDeviceId: async deviceId => {
-            if (currentCall) currentCall.dispose()
-            currentCall = null
+            if (this.callContext.currentCall) this.callContext.currentCall.dispose()
+            this.callContext.currentCall = null
             if (deviceId === 'off') {
               return
             }
@@ -98,7 +98,7 @@ const app = new Vue({
             call.on('error', (e) => {
               alert('Cannot establish call!')
             })
-            currentCall = {
+            this.callContext.currentCall = {
               dispose() {
                 for (const t of stream.getTracks()) t.stop()
                 call.close()
