@@ -44,7 +44,7 @@
       </template>
       <template v-if="mode === 'receiver'">
         <p id="connection-info">
-          Other peers can connect to you by going to {{url}}
+          Other peers can connect to you by going to <a :href="url" @click="share($event, url)">{{url}}</a>
         </p>
         <p id="connection-status">
           Connected to {{activeConnections.length}} other peer{{activeConnections.length === 1 ? '' : 's'}}.
@@ -53,7 +53,10 @@
           {{ error }}
         </template>
       </template>
-      <video-stream :video-stream="videoStream.stream" v-for="videoStream of videoStreams" :key="videoStream.id"></video-stream>
+      <div v-for="videoStream of videoStreams" :key="videoStream.id">
+        {{videoStream.id}} - {{videoStream.status}}
+        <video-stream :video-stream="videoStream.stream" v-if="videoStream.stream"></video-stream>
+      </div>
     </div>
 
     <script src="https://unpkg.com/peerjs@1.0.0/dist/peerjs.min.js"></script>

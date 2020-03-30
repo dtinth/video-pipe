@@ -98,7 +98,12 @@ const app = new Vue({
             call.on('error', (e) => {
               alert('Cannot establish call!')
             })
-            registerConnection(call)
+            currentCall = {
+              dispose() {
+                for (const t of stream.getTracks()) t.stop()
+                call.close()
+              }
+            }
           }
         }
       } else {
@@ -107,20 +112,34 @@ const app = new Vue({
     })
     peer.on('call', call => {
       console.log('Call received!')
+      const videoStream = { id: this.nextStreamId++, status: 'Waiting for stream', stream: null }
+      this.videoStreams.unshift(videoStream)
       call.on('stream', (remoteStream) => {
-        const item = { stream: remoteStream, id: this.nextStreamId++ }
-        this.videoStreams.unshift(item)
+        videoStream.status = 'Video stream received'
+        videoStream.stream = remoteStream
         for (const track of remoteStream.getTracks()) {
           track.addEventListener('ended', () => {
-            this.videoStreams = this.videoStreams.filter(s => s !== item)
+            videoStream.status = 'Track ended'
+            this.videoStreams = this.videoStreams.filter(s => s !== videoStream)
           })
         }
       })
       call.on('close', (remoteStream) => {
-        this.videoStreams = this.videoStreams.filter(s => s !== item)
+        videoStream.status = 'Closed'
+        this.videoStreams = this.videoStreams.filter(s => s !== videoStream)
       })
       call.answer()
       registerConnection(call)
     })
+  },
+  methods: {
+    async share(e, url) {
+      e.preventDefault()
+      try {
+        await navigator.share({ url })
+      } catch (e) {
+        prompt('Copy URL', url)
+      }
+    }
   }
 })
