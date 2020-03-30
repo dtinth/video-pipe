@@ -1,68 +1,67 @@
 /* global Peer, Vue */
 
+const VideoStream = {
+  props: ['videoStream'],
+  template: `
+    <div>
+      <video ref="video"></video>
+    </div>
+  `,
+  mounted() {
+    this.$refs.video.srcObject = this.videoStream
+  },
+}
+
 const app = new Vue({
   el: '#app',
+  components: {
+    VideoStream
+  },
   data: {
     baseUrl: location.href.replace(/[\?#].*/, ''),
     peerId: '',
     activeConnections: [],
     mode: 'loading',
     error: null,
+    videoStream: null
   },
   computed: {
     url() {
       return this.baseUrl + '#' + this.peerId
     },
   },
-  async mounted() {
+  mounted() {
     const peer = new Peer(sessionStorage.savedPeerId || undefined)
     window.peer = this.peer = peer
-    peer.on('open', (id) => {
+    const registerConnection = (conn) => {
+      this.activeConnections.push(conn)
+      conn.on('close', () => {
+        this.activeConnections.filter(c => c !== conn)
+      })
+    }
+    peer.on('open', async (id) => {
       this.peerId = id
       sessionStorage.savedPeerId = id
       const connectMatch = location.hash.match(/#(\w+)/)
       if (connectMatch) {
-        this.mode = 'receiver'
+        this.mode = 'sender'
         const target = connectMatch[1]
         console.log('Connecting to ', target)
-        const conn = peer.connect(target)
-        conn.on('open', () => {
-          console.log('Connected!')
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        const call = peer.call(target, stream)
+        call.on('error', (e) => {
+          alert('Cannot establish call!')
         })
       } else {
         this.mode = 'receiver'
       }
     })
-    peer.on('call', conn => {
+    peer.on('call', call => {
       console.log('Call received!')
+      call.on('stream', (remoteStream) => {
+        this.videoStream = remoteStream
+      })
+      call.answer()
     })
-    try {
-      const access = this.midiAccess = await navigator.requestMIDIAccess({ sysex: false })
-      const refreshPorts = () => {
-        this.availableInputs = getKeys(access.inputs).map(key => ({
-          key,
-          name: access.inputs.get(key).name
-        }))
-        this.availableOutputs = getKeys(access.outputs).map(key => ({
-          key,
-          name: access.outputs.get(key).name
-        }))
-      }
-      access.onstatechange = refreshPorts
-      refreshPorts()
-    } catch (e) {
-      this.error = ('Failed to request MIDI access! ' + e)
-    }
   }
 })
-
-function getKeys(portMap) {
-  const keys = []
-  const iterator = portMap.keys()
-  for (;;) {
-    const { done, value: key } = iterator.next()
-    if (done) break
-    keys.push(key)
-  }
-  return keys
-}
