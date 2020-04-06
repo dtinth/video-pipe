@@ -88,24 +88,34 @@ const app = new Vue({
               for (const t of stream.getTracks()) t.stop()
             }
           },
-          setDeviceId: async deviceId => {
-            if (this.callContext.currentCall) this.callContext.currentCall.dispose()
-            this.callContext.currentCall = null
-            if (deviceId === 'off') {
-              return
-            }
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId }, audio: false })
-            const call = peer.call(target, stream)
-            call.on('error', (e) => {
-              alert('Cannot establish call!')
-            })
-            this.callContext.currentCall = {
-              stream,
-              dispose() {
-                for (const t of stream.getTracks()) t.stop()
-                call.close()
+          changeStream: async getStream => {
+            try {
+              if (this.callContext.currentCall) this.callContext.currentCall.dispose()
+              this.callContext.currentCall = null
+              const stream = await getStream()
+              if (!stream) return
+              const call = peer.call(target, stream)
+              call.on('error', (e) => {
+                alert('Cannot establish call!')
+              })
+              this.callContext.currentCall = {
+                stream,
+                dispose() {
+                  for (const t of stream.getTracks()) t.stop()
+                  call.close()
+                }
               }
+            } catch (error) {
+              alert(`Cannot change stream: ${error}`)
             }
+          },
+          setDeviceId: async deviceId => {
+            return this.callContext.changeStream(async () => {
+              if (deviceId === 'off') {
+                return null
+              }
+              return navigator.mediaDevices.getUserMedia({ video: { deviceId }, audio: false })
+            })
           }
         }
       } else {
@@ -141,6 +151,13 @@ const app = new Vue({
         await navigator.share({ url })
       } catch (e) {
         prompt('Copy URL', url)
+      }
+    },
+    shareScreen() {
+      if (this.callContext) {
+        return this.callContext.changeStream(async () => {
+          return navigator.mediaDevices.getDisplayMedia({})
+        })
       }
     }
   }
